@@ -3,7 +3,7 @@ using ThunderRoad;
 using System.Collections;
 using HarmonyLib;
 
-namespace WingsUpdated
+namespace Wings
 {
     public class WingsLevelModule : LevelModule
     {
@@ -11,13 +11,13 @@ namespace WingsUpdated
         private static WingsData wingData;
 
         // PRE-FLIGHT DATA
-        private static bool statsStored;
         private static float oldDrag;
         private static float oldMass;
         private static float oldSpeed;
         private static float oldMaxAngle;
         private static bool orgFallDamage;
         private static bool orgCrouchOnJump;
+        private static bool orgStickJump;
 
         // FLIGHT DATA
         private static Locomotion loco;
@@ -51,20 +51,21 @@ namespace WingsUpdated
                     cd = 0.1f;
                 }
             }
-            
+
             private static void ActivateFly()
             {
                 loco = Player.local.locomotion;
-                if (!statsStored)
-                {
-                    statsStored = true;
-                    oldSpeed = loco.airSpeed;
-                    oldMaxAngle = loco.groundAngle;
-                    oldDrag = loco.rb.drag;
-                    oldMass = loco.rb.mass;
-                    orgFallDamage = Player.fallDamage;
-                    orgCrouchOnJump = Player.crouchOnJump;
-                }
+
+                // STORE ORIGINAL STATS
+                oldSpeed = loco.airSpeed;
+                oldMaxAngle = loco.groundAngle;
+                oldDrag = loco.rb.drag;
+                oldMass = loco.rb.mass;
+                orgFallDamage = Player.fallDamage;
+                orgCrouchOnJump = Player.crouchOnJump;
+                orgStickJump = GameManager.options.allowStickJump;
+
+                // ENABLE FLIGHT STATS
                 loco.groundAngle = -359f;
                 loco.rb.useGravity = false;
                 loco.rb.mass = 100000f;
@@ -73,6 +74,7 @@ namespace WingsUpdated
                 loco.airSpeed = oldSpeed * wingData.hoizontalSpeedMult;
                 Player.fallDamage = false;
                 Player.crouchOnJump = false;
+                GameManager.options.allowStickJump = false;
                 isFlying = true;
             }
 
@@ -86,6 +88,7 @@ namespace WingsUpdated
                 loco.airSpeed = oldSpeed;
                 Player.fallDamage = orgFallDamage;
                 Player.crouchOnJump = orgCrouchOnJump;
+                GameManager.options.allowStickJump = orgStickJump;
             }
         }
 
@@ -96,17 +99,17 @@ namespace WingsUpdated
             {
                 if (isFlying && axis.y != 0.0)
                     if (!Pointer.GetActive() || !Pointer.GetActive().isPointingUI)
-                        loco.rb.AddForce(Vector3.up * wingData.verticalAcceleration * axis.y, ForceMode.Acceleration); 
+                        loco.rb.AddForce(Vector3.up * wingData.verticalAcceleration * axis.y, ForceMode.Acceleration);
             }
         }
-        
+
         public override void Update()
         {
             base.Update();
 
             wingData.verticalAcceleration = verticalAcceleration;
             wingData.hoizontalSpeedMult = hoizontalSpeedMult;
-            
+
             if (isFlying)
             {
                 if (Player.local.creature)
