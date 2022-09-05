@@ -2,94 +2,99 @@
 using ThunderRoad;
 using System.Collections;
 using HarmonyLib;
+using Newtonsoft.Json;
+using System.IO;
+using System;
 
 namespace Wings
 {
+    [Serializable]
+    public class WingsData
+    {
+        public float verticalForce;
+        public float horizontalSpeed;
+    }
+
     public class WingsLevelModule : LevelModule
     {
-        private static float? cd;
-        private static WingsData wingData;
+        public const string OPTIONS_FILE_PATH = "\\Mods\\Wings\\WingsOptions.opt";
+        public static WingsData wingData;
 
         // PRE-FLIGHT DATA
-        private static float oldDrag;
-        private static float oldMass;
-        private static float oldSpeed;
-        private static float oldMaxAngle;
-        private static bool orgFallDamage;
-        private static bool orgCrouchOnJump;
-        private static bool orgStickJump;
+        private float oldDrag;
+        private float oldMass;
+        private float oldSpeed;
+        private float oldMaxAngle;
+        private bool orgFallDamage;
+        private bool orgCrouchOnJump;
+        private bool orgStickJump;
 
         // FLIGHT DATA
         private static Locomotion loco;
         private static bool isFlying;
-        public float hoizontalSpeedMult;
-        public float verticalAcceleration;
 
         public override IEnumerator OnLoadCoroutine()
         {
-            Debug.Log("(Wings) Loaded successfully!");
-            wingData = GameManager.local.gameObject.AddComponent<WingsData>();
-            new Harmony("Jump").PatchAll();
+            try
+            {
+                wingData = JsonConvert.DeserializeObject<WingsData>(File.ReadAllText(Application.streamingAssetsPath + OPTIONS_FILE_PATH));
+            }
+            catch
+            {
+                Debug.LogError("Unable to read WingsOptions.opt. The mod WILL break!");
+            }
+            PlayerControl.local.OnJumpButtonEvent += OnJumpEvent;
             new Harmony("Turn").PatchAll();
             return base.OnLoadCoroutine();
         }
 
-        [HarmonyPatch(typeof(PlayerControl), "Jump")]
-        class JumpFix
+        private void OnJumpEvent(bool active, EventTime eventTime)
         {
-            public static void Postfix(bool active)
+            if (eventTime == EventTime.OnEnd && active && !Player.local.locomotion.isGrounded)
             {
-                if (active && !Player.local.locomotion.isGrounded)
-                {
-                    if (cd == null)
-                    {
-                        if (isFlying)
-                            DeactivateFly();
-                        else
-                            ActivateFly();
-                    }
-                    cd = 0.1f;
-                }
+                if (isFlying)
+                    DeactivateFly();
+                else
+                    ActivateFly();
             }
+        }
 
-            private static void ActivateFly()
-            {
-                loco = Player.local.locomotion;
+        private void ActivateFly()
+        {
+            loco = Player.local.locomotion;
 
-                // STORE ORIGINAL STATS
-                oldSpeed = loco.airSpeed;
-                oldMaxAngle = loco.groundAngle;
-                oldDrag = loco.rb.drag;
-                oldMass = loco.rb.mass;
-                orgFallDamage = Player.fallDamage;
-                orgCrouchOnJump = Player.crouchOnJump;
-                orgStickJump = GameManager.options.allowStickJump;
+            // STORE ORIGINAL STATS
+            oldSpeed = loco.airSpeed;
+            oldMaxAngle = loco.groundAngle;
+            oldDrag = loco.rb.drag;
+            oldMass = loco.rb.mass;
+            orgFallDamage = Player.fallDamage;
+            orgCrouchOnJump = Player.crouchOnJump;
+            orgStickJump = GameManager.options.allowStickJump;
 
-                // ENABLE FLIGHT STATS
-                loco.groundAngle = -359f;
-                loco.rb.useGravity = false;
-                loco.rb.mass = 100000f;
-                loco.rb.drag = 0.9f;
-                loco.velocity = Vector3.zero;
-                loco.airSpeed = oldSpeed * wingData.hoizontalSpeedMult;
-                Player.fallDamage = false;
-                Player.crouchOnJump = false;
-                GameManager.options.allowStickJump = false;
-                isFlying = true;
-            }
+            // ENABLE FLIGHT STATS
+            loco.groundAngle = -359f;
+            loco.rb.useGravity = false;
+            loco.rb.mass = 100000f;
+            loco.rb.drag = 0.9f;
+            loco.velocity = Vector3.zero;
+            Player.fallDamage = false;
+            Player.crouchOnJump = false;
+            GameManager.options.allowStickJump = false;
+            isFlying = true;
+        }
 
-            private static void DeactivateFly()
-            {
-                loco.groundAngle = oldMaxAngle;
-                isFlying = false;
-                loco.rb.drag = oldDrag;
-                loco.rb.useGravity = true;
-                loco.rb.mass = oldMass;
-                loco.airSpeed = oldSpeed;
-                Player.fallDamage = orgFallDamage;
-                Player.crouchOnJump = orgCrouchOnJump;
-                GameManager.options.allowStickJump = orgStickJump;
-            }
+        private void DeactivateFly()
+        {
+            loco.groundAngle = oldMaxAngle;
+            isFlying = false;
+            loco.rb.drag = oldDrag;
+            loco.rb.useGravity = true;
+            loco.rb.mass = oldMass;
+            loco.airSpeed = oldSpeed;
+            Player.fallDamage = orgFallDamage;
+            Player.crouchOnJump = orgCrouchOnJump;
+            GameManager.options.allowStickJump = orgStickJump;
         }
 
         [HarmonyPatch(typeof(PlayerControl), "Turn")]
@@ -99,21 +104,18 @@ namespace Wings
             {
                 if (isFlying && axis.y != 0.0)
                     if (!Pointer.GetActive() || !Pointer.GetActive().isPointingUI)
-                        loco.rb.AddForce(Vector3.up * wingData.verticalAcceleration * axis.y, ForceMode.Acceleration);
+                        loco.rb.AddForce(Vector3.up * wingData.verticalForce * axis.y, ForceMode.Acceleration);
             }
         }
 
         public override void Update()
         {
             base.Update();
-
-            wingData.verticalAcceleration = verticalAcceleration;
-            wingData.hoizontalSpeedMult = hoizontalSpeedMult;
-
             if (isFlying)
             {
                 if (Player.local.creature)
                 {
+                    loco.airSpeed = wingData.horizontalSpeed;
                     DestabilizeHeldNPC(Player.local.handLeft);
                     DestabilizeHeldNPC(Player.local.handRight);
                 }
@@ -121,12 +123,6 @@ namespace Wings
                     isFlying = false;
             }
 
-            if (cd != null)
-            {
-                cd -= Time.deltaTime;
-                if (cd <= 0f)
-                    cd = null;
-            }
         }
 
         private static void DestabilizeHeldNPC(PlayerHand side)
