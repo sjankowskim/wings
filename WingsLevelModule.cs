@@ -2,23 +2,19 @@
 using ThunderRoad;
 using System.Collections;
 using HarmonyLib;
-using Newtonsoft.Json;
-using System.IO;
-using System;
 
 namespace Wings
 {
-    [Serializable]
-    public class WingsData
+    public class WingsData : MonoBehaviour
     {
         public float verticalForce;
-        public float horizontalSpeed;
     }
 
     public class WingsLevelModule : LevelModule
     {
-        public const string OPTIONS_FILE_PATH = "\\Mods\\Wings\\WingsOptions.opt";
-        public static WingsData wingData;
+        public float verticalForce = 13.0f;
+        public float horizontalSpeed = 13.0f;
+        public static WingsData data;
 
         // PRE-FLIGHT DATA
         private float oldDrag;
@@ -35,17 +31,15 @@ namespace Wings
 
         public override IEnumerator OnLoadCoroutine()
         {
-            try
-            {
-                wingData = JsonConvert.DeserializeObject<WingsData>(File.ReadAllText(Application.streamingAssetsPath + OPTIONS_FILE_PATH));
-            }
-            catch
-            {
-                Debug.LogError("Unable to read WingsOptions.opt. The mod WILL break!");
-            }
+            data = GameManager.local.gameObject.AddComponent<WingsData>();
             PlayerControl.local.OnJumpButtonEvent += OnJumpEvent;
             new Harmony("Turn").PatchAll();
             return base.OnLoadCoroutine();
+        }
+
+        private void InitValues()
+        {
+            data.verticalForce = verticalForce;
         }
 
         private void OnJumpEvent(bool active, EventTime eventTime)
@@ -104,18 +98,20 @@ namespace Wings
             {
                 if (isFlying && axis.y != 0.0)
                     if (!Pointer.GetActive() || !Pointer.GetActive().isPointingUI)
-                        loco.rb.AddForce(Vector3.up * wingData.verticalForce * axis.y, ForceMode.Acceleration);
+                        loco.rb.AddForce(Vector3.up * data.verticalForce * axis.y, ForceMode.Acceleration);
             }
         }
 
         public override void Update()
         {
             base.Update();
+            InitValues();
+
             if (isFlying)
             {
                 if (Player.local.creature)
                 {
-                    loco.airSpeed = wingData.horizontalSpeed;
+                    loco.airSpeed = horizontalSpeed / 100f; // Made horizontalSpeed bigger to allow MCM to give more granularity
                     DestabilizeHeldNPC(Player.local.handLeft);
                     DestabilizeHeldNPC(Player.local.handRight);
                 }
