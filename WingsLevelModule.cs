@@ -1,20 +1,14 @@
 ﻿using UnityEngine;
 using ThunderRoad;
 using System.Collections;
-using HarmonyLib;
 
 namespace Wings
 {
-    public class WingsData : MonoBehaviour
-    {
-        public float verticalForce;
-    }
-
     public class WingsLevelModule : LevelModule
     {
+        public bool useWingsMod = true;
         public float verticalForce = 13.0f;
         public float horizontalSpeed = 13.0f;
-        public static WingsData data;
 
         // PRE-FLIGHT DATA
         private float oldDrag;
@@ -26,31 +20,26 @@ namespace Wings
         private bool orgStickJump;
 
         // FLIGHT DATA
-        private static Locomotion loco;
-        private static bool isFlying;
+        private Locomotion loco;
+        private bool isFlying;
+        private bool pressedIn, previousPressedIn;
 
         public override IEnumerator OnLoadCoroutine()
         {
-            data = GameManager.local.gameObject.AddComponent<WingsData>();
-            PlayerControl.local.OnJumpButtonEvent += OnJumpEvent;
-            new Harmony("Turn").PatchAll();
-            return base.OnLoadCoroutine();
-        }
-
-        private void InitValues()
-        {
-            data.verticalForce = verticalForce;
-        }
-
-        private void OnJumpEvent(bool active, EventTime eventTime)
-        {
-            if (eventTime == EventTime.OnEnd && active && !Player.local.locomotion.isGrounded)
+            if (PlayerControl.loader == PlayerControl.Loader.OpenVR)
             {
-                if (isFlying)
-                    DeactivateFly();
-                else
-                    ActivateFly();
+                ((InputSteamVR)PlayerControl.input).jumpAction.onStateDown += ((fromAction, fromSource) =>
+                {
+                    if (!Player.local.locomotion.isGrounded)
+                    {
+                        if (isFlying)
+                            DeactivateFly();
+                        else
+                            ActivateFly();
+                    }
+                });
             }
+            return base.OnLoadCoroutine();
         }
 
         private void ActivateFly()
@@ -66,16 +55,19 @@ namespace Wings
             orgCrouchOnJump = Player.crouchOnJump;
             orgStickJump = GameManager.options.allowStickJump;
 
-            // ENABLE FLIGHT STATS
-            loco.groundAngle = -359f;
-            loco.rb.useGravity = false;
-            loco.rb.mass = 100000f;
-            loco.rb.drag = 0.9f;
-            loco.velocity = Vector3.zero;
-            Player.fallDamage = false;
-            Player.crouchOnJump = false;
-            GameManager.options.allowStickJump = false;
-            isFlying = true;
+            if (useWingsMod)
+            {
+                // ENABLE FLIGHT STATS
+                loco.groundAngle = -359f;
+                loco.rb.useGravity = false;
+                loco.rb.mass = 100000f;
+                loco.rb.drag = 0.9f;
+                loco.velocity = Vector3.zero;
+                Player.fallDamage = false;
+                Player.crouchOnJump = false;
+                GameManager.options.allowStickJump = false;
+                isFlying = true;
+            }
         }
 
         private void DeactivateFly()
@@ -91,34 +83,45 @@ namespace Wings
             GameManager.options.allowStickJump = orgStickJump;
         }
 
-        [HarmonyPatch(typeof(PlayerControl), "Turn")]
-        class TurnFix
-        {
-            public static void Postfix(Side side, Vector2 axis)
-            {
-                if (isFlying && axis.y != 0.0)
-                    if (!Pointer.GetActive() || !Pointer.GetActive().isPointingUI)
-                        loco.rb.AddForce(Vector3.up * data.verticalForce * axis.y, ForceMode.Acceleration);
-            }
-        }
-
         public override void Update()
         {
             base.Update();
-            InitValues();
+            if (PlayerControl.loader == PlayerControl.Loader.Oculus)
+                pressedIn = ((InputXR_Oculus)PlayerControl.input).rightController.thumbstickClick.GetDown();
 
-            if (isFlying)
+            if (Player.currentCreature)
             {
-                if (Player.local.creature)
+                if (!Player.local.locomotion.isGrounded)
                 {
-                    loco.airSpeed = horizontalSpeed / 100f; // Made horizontalSpeed bigger to allow MCM to give more granularity
-                    DestabilizeHeldNPC(Player.local.handLeft);
-                    DestabilizeHeldNPC(Player.local.handRight);
-                }
-                else
-                    isFlying = false;
-            }
+                    if (PlayerControl.loader == PlayerControl.Loader.Oculus && pressedIn && !previousPressedIn)
+                    {
+                        if (isFlying)
+                            DeactivateFly();
+                        else
+                            ActivateFly();
+                    }
+                    if (isFlying)
+                    {
+                        loco.airSpeed = horizontalSpeed / 100f; // Made horizontalSpeed bigger to allow MCM to give more granularity
+                        DestabilizeHeldNPC(Player.local.handLeft);
+                        DestabilizeHeldNPC(Player.local.handRight);
 
+                        if (PlayerControl.loader == PlayerControl.Loader.Oculus)
+                            TryFlyUp(((InputXR_Oculus)PlayerControl.input).rightController.thumbstick.GetValue());
+                        else
+                            TryFlyUp(((InputSteamVR)PlayerControl.input).turnAction.axis);
+                    }
+                }
+            } else
+                isFlying = false;
+
+            previousPressedIn = pressedIn;
+        }
+
+        private void TryFlyUp(Vector2 axis)
+        {
+            if (axis.y != 0.0 && (!Pointer.GetActive() || !Pointer.GetActive().isPointingUI))
+                loco.rb.AddForce(Vector3.up * verticalForce * axis.y, ForceMode.Acceleration);
         }
 
         private static void DestabilizeHeldNPC(PlayerHand side)
