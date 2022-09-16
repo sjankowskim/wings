@@ -6,8 +6,13 @@ namespace Wings
 {
     public class WingsLevelModule : LevelModule
     {
+        [Tooltip("Turns on/off the Wings mod.")]
         public bool useWingsMod = true;
+        [Tooltip("Determines how fast the player can fly vertically.")]
+        [Range(0, 100)]
         public float verticalForce = 13.0f;
+        [Tooltip("Determines how fast the player can fly horizontally.")]
+        [Range(0, 100)]
         public float horizontalSpeed = 13.0f;
 
         // PRE-FLIGHT DATA
