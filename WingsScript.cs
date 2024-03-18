@@ -120,7 +120,7 @@ namespace Wings
                     }
                     if (isFlying)
                     {
-                        loco.airSpeed = horizontalSpeed / 100f; // Made horizontalSpeed bigger to allow MCM to give more granularity
+                        loco.airSpeed = horizontalSpeed / 100f;
                         DestabilizeHeldNPC(Player.local.handLeft);
                         DestabilizeHeldNPC(Player.local.handRight);
 
