@@ -7,7 +7,7 @@ namespace Wings
     {
         // Source: @Wully on BaS Discord
         // Big help in getting this ready for U12
-        public static ModOptionFloat[] zeroToOneHundered()
+        public static ModOptionFloat[] ZeroToOneHundered()
         {
             ModOptionFloat[] options = new ModOptionFloat[101];
             float val = 0;
@@ -22,10 +22,10 @@ namespace Wings
         [ModOption(name: "Use Wings Mod", tooltip: "Turns on/off the Wings mod.", defaultValueIndex = 1, order = 0)]
         public static bool useWingsMod;
 
-        [ModOption(name: "Vertical Force", tooltip: "Determines how fast the player can fly vertically.", valueSourceName = nameof(zeroToOneHundered), defaultValueIndex = 13, order = 1)]
+        [ModOption(name: "Vertical Force", tooltip: "Determines how fast the player can fly vertically.", valueSourceName = nameof(ZeroToOneHundered), defaultValueIndex = 13, order = 1)]
         public static float verticalForce;
 
-        [ModOption(name: "Horizontal Speed", tooltip: "Determines how fast the player can fly horizontally.", valueSourceName = nameof(zeroToOneHundered), defaultValueIndex = 13, order = 2)]
+        [ModOption(name: "Horizontal Speed", tooltip: "Determines how fast the player can fly horizontally.", valueSourceName = nameof(ZeroToOneHundered), defaultValueIndex = 13, order = 2)]
         public static float horizontalSpeed;
 
         // PRE-FLIGHT DATA
