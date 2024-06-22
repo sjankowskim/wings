@@ -34,9 +34,9 @@ namespace Wings
         private float oldHorizontalSpeed;
         private float oldVerticalSpeed;
         private float oldMaxAngle;
-        private bool orgFallDamage;
-        private bool orgCrouchOnJump;
-        private bool orgStickJump;
+        private bool oldFallDamage;
+        private bool oldCrouchOnJump;
+        private bool oldStickJump;
 
         // FLIGHT DATA
         private Locomotion loco;
@@ -71,9 +71,9 @@ namespace Wings
             oldMaxAngle = loco.groundAngle;
             oldDrag = loco.physicBody.drag;
             oldMass = loco.physicBody.mass;
-            orgFallDamage = Player.fallDamage;
-            orgCrouchOnJump = Player.crouchOnJump;
-            orgStickJump = GameManager.options.allowStickJump;
+            oldFallDamage = Player.fallDamage;
+            oldCrouchOnJump = Player.crouchOnJump;
+            oldStickJump = GameManager.options.allowStickJump;
 
             if (useWingsMod)
             {
@@ -99,9 +99,9 @@ namespace Wings
             loco.physicBody.mass = oldMass;
             loco.horizontalAirSpeed = oldHorizontalSpeed;
             loco.verticalAirSpeed = oldVerticalSpeed;
-            Player.fallDamage = orgFallDamage;
-            Player.crouchOnJump = orgCrouchOnJump;
-            GameManager.options.allowStickJump = orgStickJump;
+            Player.fallDamage = oldFallDamage;
+            Player.crouchOnJump = oldCrouchOnJump;
+            GameManager.options.allowStickJump = oldStickJump;
         }
 
         public override void ScriptUpdate()
