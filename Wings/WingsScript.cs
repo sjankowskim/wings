@@ -65,10 +65,10 @@ namespace Wings
             loco = Player.local.locomotion;
 
             // STORE ORIGINAL STATS
-            oldSpeed = loco.airSpeed;
+            oldSpeed = loco.horizontalAirSpeed;
             oldMaxAngle = loco.groundAngle;
-            oldDrag = loco.rb.drag;
-            oldMass = loco.rb.mass;
+            oldDrag = loco.physicBody.drag;
+            oldMass = loco.physicBody.mass;
             orgFallDamage = Player.fallDamage;
             orgCrouchOnJump = Player.crouchOnJump;
             orgStickJump = GameManager.options.allowStickJump;
@@ -77,9 +77,9 @@ namespace Wings
             {
                 // ENABLE FLIGHT STATS
                 loco.groundAngle = -359f;
-                loco.rb.useGravity = false;
-                loco.rb.mass = 100000f;
-                loco.rb.drag = 0.9f;
+                loco.physicBody.useGravity = false;
+                loco.physicBody.mass = 100000f;
+                loco.physicBody.drag = 0.9f;
                 loco.velocity = Vector3.zero;
                 Player.fallDamage = false;
                 Player.crouchOnJump = false;
@@ -92,10 +92,10 @@ namespace Wings
         {
             loco.groundAngle = oldMaxAngle;
             isFlying = false;
-            loco.rb.drag = oldDrag;
-            loco.rb.useGravity = true;
-            loco.rb.mass = oldMass;
-            loco.airSpeed = oldSpeed;
+            loco.physicBody.drag = oldDrag;
+            loco.physicBody.useGravity = true;
+            loco.physicBody.mass = oldMass;
+            loco.horizontalAirSpeed = oldSpeed;
             Player.fallDamage = orgFallDamage;
             Player.crouchOnJump = orgCrouchOnJump;
             GameManager.options.allowStickJump = orgStickJump;
@@ -120,7 +120,7 @@ namespace Wings
                     }
                     if (isFlying)
                     {
-                        loco.airSpeed = horizontalSpeed / 100f;
+                        loco.horizontalAirSpeed = horizontalSpeed / 100f;
                         DestabilizeHeldNPC(Player.local.handLeft);
                         DestabilizeHeldNPC(Player.local.handRight);
 
@@ -140,7 +140,7 @@ namespace Wings
         private void TryFlyUp(Vector2 axis)
         {
             if (axis.y != 0.0 && (!Pointer.GetActive() || !Pointer.GetActive().isPointingUI))
-                loco.rb.AddForce(Vector3.up * verticalForce * axis.y, ForceMode.Acceleration);
+                loco.physicBody.AddForce(Vector3.up * verticalForce * axis.y, ForceMode.Acceleration);
         }
 
         private static void DestabilizeHeldNPC(PlayerHand side)
