@@ -22,9 +22,11 @@ namespace Wings
         [ModOption(name: "Use Wings Mod", tooltip: "Turns on/off the Wings mod.", defaultValueIndex = 1, order = 0)]
         public static bool useWingsMod;
 
+        [ModOptionSlider]
         [ModOption(name: "Vertical Force", tooltip: "Determines how fast the player can fly vertically.", valueSourceName = nameof(ZeroToOneHundered), defaultValueIndex = 13, order = 1)]
         public static float verticalForce;
 
+        [ModOptionSlider]
         [ModOption(name: "Horizontal Speed", tooltip: "Determines how fast the player can fly horizontally.", valueSourceName = nameof(ZeroToOneHundered), defaultValueIndex = 13, order = 2)]
         public static float horizontalSpeed;
 
