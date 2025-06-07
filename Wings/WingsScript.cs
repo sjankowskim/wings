@@ -55,9 +55,13 @@ namespace Wings
                     if (!Player.local.locomotion.isGrounded)
                     {
                         if (isFlying)
+                        {
                             DeactivateFly();
+                        }
                         else
+                        {
                             ActivateFly();
+                        }
                     }
                 });
             }
@@ -119,9 +123,13 @@ namespace Wings
                     if (PlayerControl.loader == PlayerControl.Loader.Oculus && pressedIn && !previousPressedIn)
                     {
                         if (isFlying)
+                        {
                             DeactivateFly();
+                        }
                         else
+                        {
                             ActivateFly();
+                        }
                     }
                     if (isFlying)
                     {
@@ -130,9 +138,13 @@ namespace Wings
                         DestabilizeHeldNPC(Player.local.handRight);
 
                         if (PlayerControl.loader == PlayerControl.Loader.Oculus)
+                        {
                             TryFlyUp(((InputXR_Oculus)PlayerControl.input).rightController.thumbstick.GetValue());
+                        }
                         else
+                        {
                             TryFlyUp(((InputSteamVR)PlayerControl.input).turnAction.axis);
+                        }
                     }
                 }
             }
@@ -145,7 +157,9 @@ namespace Wings
         private void TryFlyUp(Vector2 axis)
         {
             if (axis.y != 0.0 && (!Pointer.GetActive() || !Pointer.GetActive().isPointingUI))
+            {
                 loco.physicBody.AddForce(Vector3.up * verticalForce * axis.y, ForceMode.Acceleration);
+            }
         }
 
         private static void DestabilizeHeldNPC(PlayerHand side)
@@ -156,7 +170,9 @@ namespace Wings
                 if (grabbedCreature)
                 {
                     if (grabbedCreature.ragdoll.state != Ragdoll.State.Inert)
+                    {
                         grabbedCreature.ragdoll.SetState(Ragdoll.State.Destabilized);
+                    }
                 }
                 else
                 {
@@ -164,7 +180,9 @@ namespace Wings
                     {
                         Creature creature = ragdollHand.gameObject.GetComponentInParent<Creature>();
                         if (creature && creature != Player.currentCreature)
+                        {
                             ragdollHand.TryRelease();
+                        }
                     }
                 }
             }
