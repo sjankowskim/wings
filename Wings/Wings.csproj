@@ -35,18 +35,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="SteamVR, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Blade &amp; Sorcery\AssemblyReferences\Managed\SteamVR.dll</HintPath>
-    </Reference>
-    <Reference Include="SteamVR_Actions, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Blade &amp; Sorcery\AssemblyReferences\Managed\SteamVR_Actions.dll</HintPath>
-    </Reference>
-    <Reference Include="Steamworks.NET, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Blade &amp; Sorcery\AssemblyReferences\Managed\Steamworks.NET.dll</HintPath>
-    </Reference>
     <Reference Include="TestingTool">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Blade &amp; Sorcery\AssemblyReferences\Managed\TestingTool.dll</HintPath>
     </Reference>
